@@ -1,0 +1,68 @@
+import * as React from 'react';
+import * as Sqlite from 'expo-sqlite';
+
+ 
+const db = Sqlite.openDatabase("Essai.db");
+const [notes, setNotes] = React.useState([]);
+
+
+React.useEffect(()=>{
+
+    db.transaction((tx) => {
+        tx.executeSql('SELECT * FROM  notes', [],(txObj, resultSet)=>setNotes(resultSet.rows._array),
+        (txObj, error)=>console.log(error)
+        );
+        
+    })  
+})
+
+ export function  addNote(){
+    db.transaction(tx=>{
+        tx.executeSql('INSERT INTO notes (title, content, date,priority) VALUES(?,?,datetime(),?) ',null,
+        (txObj, resultSet)=>{let existingNotes =[...notes];
+            existingNotes.push({id: resultSet.insertId});
+            setNotes(existingNotes);
+            },
+        (txObj, error)=>console.log(error))
+    })
+    
+}
+const updateNote = (id) => {
+    db.transaction(tx => {
+        tx.executeSql(
+            'UPDATE notes SET title= (?) WHERE id = (?)',
+            [currentName, id],
+            (txObj, resultSet) => {
+                if (resultSet.rowsAffected > 0) {
+                    const existingNames = [...names];
+                    const indexToUpdate = existingNames.findIndex(name => name.id === id);
+                    if (index !== -1) {
+                        existingNames[indexToUpdate].name = currentName;
+                        setNames(existingNames)
+                        setCurrentName('')
+                    }
+                }
+                
+            },
+            (txObj, err) => console.log(err)
+        );
+    });
+}
+
+const deleteNote = (id) => {
+    db.transaction(tx => {
+        tx.executeSql(
+            'DELETE FROM notes WHERE id = (?)',
+            [id],
+            (txObj, resultSet) => {
+                if (resultSet.rowsAffected > 0) {
+                    const existingNames = [...names].filter(name => name.id !== id);
+                    setNames(existingNames);
+                }
+            },
+            (txObj, err) => console.log(err)
+        );
+    })
+}
+
+
